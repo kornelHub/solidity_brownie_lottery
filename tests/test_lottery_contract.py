@@ -33,6 +33,7 @@ def test_initial_values_pass(lottery, owner_acc, default_minimal_deposit_amount)
     assert lottery.minimalDeposit() == default_minimal_deposit_amount
     assert lottery.owner() == owner_acc
     assert lottery.currentState() == 0
+    assert lottery.usersInLottery() == 0
 
 def test_change_minimal_deposit_amount_pass(lottery, owner_acc, default_minimal_deposit_amount):
     new_minimal_deposit = 420_2137_420
@@ -51,25 +52,29 @@ def test_change_minimal_deposit_amount_not_owner_fail(lottery, acc1, default_min
 def test_enter_lottery(lottery, acc1, default_minimal_deposit_amount):
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
+    starting_users_in_lottery = lottery.usersInLottery()
     amount_to_deposit = default_minimal_deposit_amount*2
     enter_tx = lottery.enterLottery({"from": acc1, "value": amount_to_deposit})
     enter_tx.wait(1)
 
     assert lottery.balance() == amount_to_deposit + starting_balance_of_lottery_sc
-    assert lottery.addressToDepositedValue(acc1) == amount_to_deposit
+    assert lottery.addressToDepositedValue(acc1) == amount_to_deposit + starting_balance_of_lottery_user
+    assert lottery.usersInLottery() == starting_users_in_lottery + 1
     assert enter_tx.events['FundsDeposited']['depositor'] == acc1
-    assert enter_tx.events['FundsDeposited']['amount'] == amount_to_deposit + starting_balance_of_lottery_user
+    assert enter_tx.events['FundsDeposited']['amount'] == amount_to_deposit
     assert enter_tx.events['FundsDeposited']['totalBalanceOfDepositor'] \
            == starting_balance_of_lottery_user + amount_to_deposit
 
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
+    starting_users_in_lottery = lottery.usersInLottery()
     amount_to_deposit = default_minimal_deposit_amount * 2
     enter_tx = lottery.enterLottery({"from": acc1, "value": amount_to_deposit})
     enter_tx.wait(1)
 
     assert lottery.balance() == amount_to_deposit + starting_balance_of_lottery_sc
     assert lottery.addressToDepositedValue(acc1) == amount_to_deposit + starting_balance_of_lottery_user
+    assert lottery.usersInLottery() == starting_users_in_lottery + 1
     assert enter_tx.events['FundsDeposited']['depositor'] == acc1
     assert enter_tx.events['FundsDeposited']['amount'] == amount_to_deposit
     assert enter_tx.events['FundsDeposited']['totalBalanceOfDepositor'] \
@@ -78,7 +83,9 @@ def test_enter_lottery(lottery, acc1, default_minimal_deposit_amount):
 def test_enter_lottery_value_below_minimal(lottery, acc1, default_minimal_deposit_amount):
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
+    starting_users_in_lottery = lottery.usersInLottery()
     with reverts("Amount to low. Use minimalDeposit() to see minimum amount!"):
         lottery.enterLottery({"from": acc1, "value": default_minimal_deposit_amount/2})
     assert lottery.balance() == starting_balance_of_lottery_sc
     assert lottery.addressToDepositedValue(acc1) == starting_balance_of_lottery_user
+    assert lottery.usersInLottery() == starting_users_in_lottery

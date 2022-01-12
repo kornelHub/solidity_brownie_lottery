@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract Lottery is Ownable{
     uint256 public minimalDeposit;
     mapping(address => uint256) public addressToDepositedValue;
+    uint256 public usersInLottery;
     enum LotteryState {OPEN, CLOSED, CHOOSING_WINNER}
     LotteryState public currentState;
 
@@ -13,6 +14,7 @@ contract Lottery is Ownable{
 
     constructor(uint256 _minimalDeposit) Ownable() {
         minimalDeposit = _minimalDeposit;
+        usersInLottery = 0;
         currentState = LotteryState.OPEN;
     }
 
@@ -24,6 +26,7 @@ contract Lottery is Ownable{
     function enterLottery() public payable isLotteryOpen {
         require(msg.value >= minimalDeposit, "Amount to low. Use minimalDeposit() to see minimum amount!");
         addressToDepositedValue[msg.sender] += msg.value;
+        usersInLottery += 1;
         emit FundsDeposited(msg.sender, msg.value, addressToDepositedValue[msg.sender]);
     }
 
