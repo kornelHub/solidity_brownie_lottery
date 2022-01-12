@@ -49,7 +49,7 @@ def test_change_minimal_deposit_amount_not_owner_fail(lottery, acc1, default_min
         lottery.changeMinimalDepositAmount(new_minimal_deposit, {"from": acc1})
     assert lottery.minimalDeposit() == default_minimal_deposit_amount
 
-def test_enter_lottery(lottery, acc1, default_minimal_deposit_amount):
+def test_enter_lottery_pass(lottery, acc1, default_minimal_deposit_amount):
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
     starting_users_in_lottery = lottery.usersInLottery()
@@ -80,12 +80,39 @@ def test_enter_lottery(lottery, acc1, default_minimal_deposit_amount):
     assert enter_tx.events['FundsDeposited']['totalBalanceOfDepositor'] \
            == starting_balance_of_lottery_user + amount_to_deposit
 
-def test_enter_lottery_value_below_minimal(lottery, acc1, default_minimal_deposit_amount):
+def test_enter_lottery_value_below_minimal_fail(lottery, acc1, default_minimal_deposit_amount):
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
     starting_users_in_lottery = lottery.usersInLottery()
     with reverts("Amount to low. Use minimalDeposit() to see minimum amount!"):
         lottery.enterLottery({"from": acc1, "value": default_minimal_deposit_amount/2})
+    assert lottery.balance() == starting_balance_of_lottery_sc
+    assert lottery.addressToDepositedValue(acc1) == starting_balance_of_lottery_user
+    assert lottery.usersInLottery() == starting_users_in_lottery
+
+def test_quite_lottery_pass(lottery, acc1, default_minimal_deposit_amount):
+    amount_to_deposit = default_minimal_deposit_amount * 2
+    lottery.enterLottery({"from": acc1, "value":amount_to_deposit}).wait(1)
+    balance_of_contract = lottery.balance()
+    deposited_amount_of_user_on_sc = lottery.addressToDepositedValue(acc1)
+    users_in_lottery = lottery.usersInLottery()
+
+    quite_tx = lottery.quiteLottery({"from": acc1})
+    quite_tx.wait(1)
+
+    assert lottery.balance() == balance_of_contract - deposited_amount_of_user_on_sc
+    assert lottery.addressToDepositedValue(acc1) == 0
+    assert lottery.usersInLottery() ==users_in_lottery - 1
+    assert quite_tx.events['WithdrawnFromLottery']['addressToWithdraw'] == acc1
+    assert quite_tx.events['WithdrawnFromLottery']['amount'] == amount_to_deposit
+
+def test_quite_lottery_user_not_in_lottery_fail(lottery, acc1):
+    starting_balance_of_lottery_sc = lottery.balance()
+    starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
+    starting_users_in_lottery = lottery.usersInLottery()
+    with reverts("You are not in lottery, no funds deposited!"):
+        lottery.quiteLottery({"from": acc1})
+
     assert lottery.balance() == starting_balance_of_lottery_sc
     assert lottery.addressToDepositedValue(acc1) == starting_balance_of_lottery_user
     assert lottery.usersInLottery() == starting_users_in_lottery
