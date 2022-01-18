@@ -28,13 +28,14 @@ def acc2():
 def acc3():
     return get_account(index=3)
 
-
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_initial_values_pass(lottery, owner_acc, default_minimal_deposit_amount):
     assert lottery.minimalDeposit() == default_minimal_deposit_amount
     assert lottery.owner() == owner_acc
     assert lottery.currentState() == 0
     assert lottery.getPlayersCount() == 0
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_change_minimal_deposit_amount_pass(lottery, owner_acc, default_minimal_deposit_amount):
     new_minimal_deposit = 420_2137_420
     assert lottery.minimalDeposit() == default_minimal_deposit_amount
@@ -42,6 +43,7 @@ def test_change_minimal_deposit_amount_pass(lottery, owner_acc, default_minimal_
     change_tx.wait(1)
     assert lottery.minimalDeposit() == new_minimal_deposit
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_change_minimal_deposit_amount_not_owner_fail(lottery, acc1, default_minimal_deposit_amount):
     new_minimal_deposit = 420_2137_420
     assert lottery.minimalDeposit() == default_minimal_deposit_amount
@@ -49,6 +51,7 @@ def test_change_minimal_deposit_amount_not_owner_fail(lottery, acc1, default_min
         lottery.changeMinimalDepositAmount(new_minimal_deposit, {"from": acc1})
     assert lottery.minimalDeposit() == default_minimal_deposit_amount
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_enter_lottery_pass(lottery, acc1, default_minimal_deposit_amount):
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
@@ -80,6 +83,7 @@ def test_enter_lottery_pass(lottery, acc1, default_minimal_deposit_amount):
     assert enter_tx.events['FundsDeposited']['totalBalanceOfDepositor'] \
            == starting_balance_of_lottery_user + amount_to_deposit
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_enter_lottery_value_below_minimal_fail(lottery, acc1, default_minimal_deposit_amount):
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
@@ -90,6 +94,7 @@ def test_enter_lottery_value_below_minimal_fail(lottery, acc1, default_minimal_d
     assert lottery.addressToDepositedValue(acc1) == starting_balance_of_lottery_user
     assert lottery.getPlayersCount() == starting_users_in_lottery
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_quite_lottery_pass(lottery, acc1, default_minimal_deposit_amount):
     amount_to_deposit = default_minimal_deposit_amount * 2
     lottery.enterLottery({"from": acc1, "value":amount_to_deposit}).wait(1)
@@ -106,6 +111,7 @@ def test_quite_lottery_pass(lottery, acc1, default_minimal_deposit_amount):
     assert quite_tx.events['WithdrawnFromLottery']['addressToWithdraw'] == acc1
     assert quite_tx.events['WithdrawnFromLottery']['amount'] == amount_to_deposit
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_quite_lottery_user_not_in_lottery_fail(lottery, acc1):
     starting_balance_of_lottery_sc = lottery.balance()
     starting_balance_of_lottery_user = lottery.addressToDepositedValue(acc1)
@@ -122,6 +128,7 @@ test_choose_winner_pass_data = [
     (100, 1, 1, 102, 'acc1'), (100, 1, 1, 99, 'acc1'), (1, 1, 9, 12, 'acc2')
 ]
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 @pytest.mark.parametrize("acc1_depo, acc2_depo, acc3_depo, random_number, winner", test_choose_winner_pass_data)
 def test_choose_winner_pass(
         lottery, owner_acc, acc1, acc2, acc3, default_minimal_deposit_amount,
@@ -176,11 +183,13 @@ def test_choose_winner_pass(
     assert lottery.balance() == 0
     assert lottery.currentState() == 0
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_choose_winner_not_owner_fail(lottery, acc1):
     with reverts("Ownable: caller is not the owner"):
         lottery.chooseWinner({"from": acc1})
     assert lottery.currentState() == 0
 
+@pytest.mark.require_network("development", "ganache", "ganache_local")
 def test_choose_winner_not_enough_users_fail(lottery, owner_acc, acc1, default_minimal_deposit_amount):
     with reverts("There is not enough users to calculate users!"):
         lottery.chooseWinner({"from": owner_acc})
