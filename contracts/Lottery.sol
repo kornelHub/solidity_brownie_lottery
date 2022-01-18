@@ -15,6 +15,7 @@ contract Lottery is Ownable, VRFConsumerBase{
 
     event FundsDeposited(address depositor, uint256 amount, uint256 totalBalanceOfDepositor);
     event WithdrawnFromLottery(address addressToWithdraw, uint256 amount);
+    event WinnerChosen(address winner, uint256 amount);
     event RequestedRandomness(bytes32 requestId);
 
     constructor(
@@ -101,9 +102,29 @@ contract Lottery is Ownable, VRFConsumerBase{
         players.pop();
     }
 
+    function resetMappingAndArray() internal {
+        for (uint i = 0; i < players.length; i++) {
+            addressToDepositedValue[players[i]] = 0;
+        }
+        players = new address payable[](0);
+    }
+
     function fulfillRandomness(bytes32 _requestId, uint256 _randomness) internal override {
         require(currentState == LotteryState.CHOOSING_WINNER);
-        require(_randomness > 0);
-        //add logic to choosing winner. Need to think about this.
+        require(_randomness > 0, "random-not-found");
+        uint256 temp=0;
+        uint256 winner_number = _randomness % (address(this).balance/10**15);
+
+        for(uint256 i=0; i < players.length; i++){
+            if ((temp <= winner_number) && (winner_number <= ((addressToDepositedValue[players[i]]/10**15) + temp -1))) {
+                payable(address(owner())).transfer(address(this).balance / 10);
+                emit WinnerChosen(players[i], address(this).balance);
+                players[i].transfer(address(this).balance);
+                resetMappingAndArray();
+                currentState = LotteryState.OPEN;
+            } else {
+                temp += addressToDepositedValue[players[i]]/10**15;
+            }
+        }
     }
 }

@@ -18,5 +18,9 @@ def deploy_link_mock():
     return link_mock
 
 
+def verify():
+    Lottery.publish_source(Lottery[-1])
+
+
 def main():
-    deploy_lottery_contract(100_000)
+    deploy_lottery_contract(1*10**15)
