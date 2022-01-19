@@ -20,14 +20,16 @@ DECIMALS = 18
 INITIAL_VALUE = Web3.toWei(2000, "ether")
 
 
-def get_account(index=None, id=None):
+def get_account(index=None, id=None, name=None):
     if index:
         return accounts[index]
     if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
         return accounts[0]
     if id:
         return accounts.load(id)
-    return accounts.add(config["wallets"][network.show_active()]["private_key"])
+    if name:
+        return accounts.add(config["wallets"][network.show_active()][name])
+    return accounts.add(config["wallets"][network.show_active()]["acc1"])
 
 
 contract_to_mock = {

@@ -21,6 +21,6 @@ networks:
 
 wallets:
   rinkeby:
-    private_key: ${RINKEBY_ACC1_PRIVATE_KEY}
-  kovan:
-    private_key: ${KOVAN_ACC1_PRIVATE_KEY}
+    acc1: ${RINKEBY_ACC1_PRIVATE_KEY}
+    acc2: ${RINKEBY_ACC2_PRIVATE_KEY}
+    acc3: ${RINKEBY_ACC3_PRIVATE_KEY}
